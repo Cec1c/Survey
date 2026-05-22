@@ -1,0 +1,7 @@
+PyQt5>=5.15,<6
+pyqt-fluent-widgets>=1.11,<2
+click>=8,<9
+rich>=13,<16
+prompt-toolkit>=3,<4
+mcp>=1.0,<2
+pytest>=8,<9

@@ -1,0 +1,1 @@
+C:\Users\15185\AppData\Local\Microsoft\WindowsApps\python.exe  main.py
