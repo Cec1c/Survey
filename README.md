@@ -1,391 +1,173 @@
 <div align="center">
 
-# 🔬 Survey
+# Survey
 
-**LLM-Powered Reverse Engineering Assistant**
+[![语言：Python](https://img.shields.io/static/v1?label=%E8%AF%AD%E8%A8%80&message=Python%203.10%2B&color=3776AB&style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![图形界面：PyQt5](https://img.shields.io/static/v1?label=%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2&message=PyQt5&color=41CD52&style=flat-square&logo=qt&logoColor=white)](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
+[![终端：Click + Rich](https://img.shields.io/static/v1?label=%E7%BB%88%E7%AB%AF&message=Click%20%2B%20Rich&color=8B5CF6&style=flat-square)](#选择使用方式)
+[![集成：IDA Pro](https://img.shields.io/static/v1?label=%E9%9B%86%E6%88%90&message=IDA%20Pro&color=F97316&style=flat-square)](#连接-ida-pro)
+[![许可：GPLv3](https://img.shields.io/static/v1?label=%E8%AE%B8%E5%8F%AF&message=GPLv3&color=2563EB&style=flat-square)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/Cec1c/Survey?style=flat-square&label=Stars&color=E3B341)](https://github.com/Cec1c/Survey/stargazers)
 
-*双界面（GUI + CLI）智能逆向分析助手，通过 MCP 协议连接 IDA Pro*
+面向 IDA Pro 的 LLM 逆向分析助手，提供图形界面和命令行两种入口。
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
-![PyQt5](https://img.shields.io/badge/PyQt5-Fluent-7a3ff2?logo=qt&logoColor=white)
-![IDA Pro](https://img.shields.io/badge/IDA%20Pro-MCP%20Bridge-fc6a26?logo=data:image/svg+xml;base64,)
-![License](https://img.shields.io/badge/License-GPLv3-green)
+让模型结合反编译、交叉引用、字符串与内存数据分析程序，也可使用工具辅助重命名、注释和类型整理。
+
+[English](README.en.md) ｜ [快速开始](#快速开始) ｜ [连接 IDA](#连接-ida-pro) ｜ [工具与扩展](#工具与扩展) ｜ [反馈](https://github.com/Cec1c/Survey/issues)
 
 </div>
 
----
+> [!NOTE]
+> 不连接 IDA 时，Survey 可以作为普通编程与逆向学习助手使用。分析具体二进制需要在 IDA Pro 中打开目标，并启动本仓库的 Bridge 插件；反编译功能还需要可用的 Hex-Rays Decompiler。
 
-## 📖 简介
+## 能做什么？
 
-Survey 是一个 **LLM 驱动的逆向工程助手**，让大语言模型直接调用 IDA Pro 的分析工具来帮你做逆向。
+- **理解程序逻辑。** 读取反编译结果、函数调用关系和交叉引用，把分析结论关联到实际工具输出。
+- **整理分析现场。** 查询字符串、导入表、内存与结构体，辅助添加注释、重命名和修改类型。
+- **连续完成分析任务。** GUI 与 CLI 共用服务层，支持流式输出、多轮工具调用、结果缓存和计划—执行—验证流程。
+- **扩展分析能力。** 使用 IDAPython 参考与 UPX Skill，也可接入独立部署的 LLM4Decompile 服务。
 
-它不是一个简单的聊天机器人——它可以 **反编译函数、追踪交叉引用、重命名变量、分析内存布局**，并基于工具返回的真实数据给出有理有据的分析结论。
+## 选择使用方式
 
-> 🧠 **核心理念**：LLM 负责推理，工具负责取证，一切结论都有证据支撑。
+| 入口 | 启动命令 | 适合场景 |
+| --- | --- | --- |
+| GUI · PyQt5 + Fluent Widgets | `python main.py` | 对话、模型设置、Skills 浏览和工具调用展示 |
+| CLI · Click + Rich | `python -m cli.main run` | 终端中的多轮交互 |
+| CLI · 单次提问 | `python -m cli.main ask "分析当前函数的逻辑"` | 获取一次回答后退出 |
 
----
+所有命令均在项目根目录、已激活的虚拟环境中执行。
 
-## ✨ 特性一览
+## 快速开始
 
-### 🖥️ 双界面
+### 1. 安装依赖
 
-| 界面 | 启动方式 | 适合场景 |
-|------|---------|---------|
-| **GUI** (PyQt5 + Fluent) | `python main.py` 或 `start_venv.bat` | 图形化操作、实时流式输出、可视化工具面板 |
-| **CLI** (Click + Rich) | `python -m cli.main run` 或 `cli.bat` | 终端工作流、脚本集成、SSH 远程使用 |
+准备 **Python 3.10+**，以及支持 OpenAI-compatible Chat Completions 的模型服务。使用 IDA 工具时，模型还需支持工具调用。
 
-### 🛠️ 50+ IDA Pro 工具
+Windows PowerShell：
 
-通过 MCP (Model Context Protocol) 桥接，LLM 可以调用覆盖逆向全流程的工具：
-
-| 分类 | 工具 | 说明 |
-|------|------|------|
-| 📋 **元数据** | `check_connection` `get_metadata` `get_entry_points` | 连接状态、二进制信息 |
-| 🔍 **分析** | `decompile_function` `disassemble_function` `get_callers` `get_callees` | 反编译、反汇编、调用链追踪 |
-| 🧠 **查询** | `list_functions` `list_strings` `list_imports` `list_globals` | 全局搜索与过滤 |
-| ✏️ **修改** | `rename_function` `set_comment` `set_function_prototype` `patch_asm` | 重命名、注释、类型修改 |
-| 🏗️ **结构体** | `get_defined_structures` `search_structures` `declare_c_type` | 类型系统操作 |
-| 📦 **内存** | `read_integer` `read_string` `read_bytes` | 内存数据读取 |
-| 🗂️ **栈帧** | `get_stack_frame_variables` `rename_stack_frame_variable` | 栈变量分析 |
-| 🐍 **脚本** | `execute_python` | 在 IDA 中执行任意 IDAPython 脚本 |
-| 🐛 **调试** | `debug_start` `debug_step_into` `debug_add_breakpoint` `debug_get_registers` | 完整调试器控制 |
-
-### 🤖 智能 Agent 循环
-
-```
-用户提问 → LLM 思考 → 调用工具 → 获取结果 → 继续推理 → ... → 输出结论
+```powershell
+git clone https://github.com/Cec1c/Survey.git
+cd Survey
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-- **多轮工具调用**：最多 48 轮自动工具调用，支持复杂分析任务
-- **假设驱动分析**：自动形成假设、收集证据、验证结论
-- **计划-执行-验证**：三阶段状态机，确保分析有条理
-- **工具结果缓存**：避免重复调用，节省 token 开销
-- **并发控制**：安全工具并行执行，修改类工具串行保护
+Linux / macOS 创建虚拟环境后使用 `source .venv/bin/activate` 激活；GUI 还需要可用的 Qt 桌面环境。
 
-### 📚 Skills 系统
+### 2. 配置模型
 
-通过 Markdown 文件扩展 LLM 的知识库：
+首次配置时，从模板复制本地配置文件：
 
-- 🐍 **IDAPython** — 50+ IDA Python API 参考文档
-- 📦 **UPX 解壳** — UPX 压缩壳检测与脱壳工具
-
-### 🔬 LLM4Decompile 集成（可选）
-
-接入本地 vLLM 服务器运行 LLM4Decompile 模型，实现：
-- 伪代码优化（Refine）
-- 结构体恢复（Recover Structure）
-- 标识符恢复（Recover Identifiers）
-
----
-
-## 🚀 快速开始
-
-### 📋 前置要求
-
-- **Python 3.10+**
-- **IDA Pro 7.x / 8.x / 9.x**（可选，不连接 IDA 也能当通用助手用）
-- 一个 LLM API 密钥（DeepSeek / OpenAI / 其他兼容 API）
-
-### ⚙️ 安装
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/your-username/survey.git
-cd survey
-
-# 2. 创建虚拟环境
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate    # Linux/macOS
-
-# 3. 安装依赖
-pip install -r requirements.txt
+```powershell
+Copy-Item app/config/llm_config.example.json app/config/llm_config.json
 ```
 
-### 🔑 配置
+编辑 `app/config/llm_config.json`：
 
-```bash
-# 从模板创建你的配置文件
-copy app\config\llm_config.example.json app\config\llm_config.json
-```
+| 字段 | 填写内容 |
+| --- | --- |
+| `base_url` | 模型服务的 API 地址 |
+| `api_key` | 该服务的访问密钥 |
+| `model` | 账户实际可用的模型 ID，不必沿用模板示例 |
+| `use_ida_tools` | 是否请求启用 IDA 工具模式 |
+| `mcp_host` / `mcp_port` | IDA Bridge 地址，默认 `127.0.0.1:31337` |
 
-编辑 `app/config/llm_config.json`，至少修改以下字段：
+> [!WARNING]
+> 本地配置包含真实 API Key。`app/config/llm_config.json` 已被 Git 忽略；分享配置或提交问题时，请先移除密钥。
 
-```jsonc
-{
-  "api_key": "sk-your-actual-api-key",   // ← 填入你的 API Key
-  "base_url": "https://api.deepseek.com", // ← 或其他兼容 API 地址
-  "model": "deepseek-v4-pro",             // ← 模型名称
-  "use_ida_tools": true                    // ← false 则不需要 IDA
-}
-```
+### 3. 启动
 
-> ⚠️ **注意**：`llm_config.json` 已被 `.gitignore` 忽略，不会提交到仓库。请勿将含有真实 API Key 的配置文件推送至公开仓库。
+选择 GUI 或 CLI：
 
-### 🏃 运行
-
-```bash
-# GUI 模式 — 图形界面
+```powershell
 python main.py
-# 或者直接双击 start_venv.bat（自动创建 venv 并安装依赖）
+```
 
-# CLI 模式 — 终端交互
+```powershell
 python -m cli.main run
-# 或者双击 cli.bat
+```
 
-# CLI 单次提问
-python -m cli.main ask "分析这个函数的逻辑"
+查看当前模型、Skills 和 IDA 连接状态：
 
-# 查看 CLI 配置
+```powershell
 python -m cli.main config
 ```
 
----
+CLI 启动时会检测 Bridge：连接成功则启用 IDA 工具，连接不可用则使用普通对话模式。配置中的 `use_ida_tools` 与运行时实际状态可能不同，以 `config` 输出为准。
 
-## 🏛️ 架构概览
+## 连接 IDA Pro
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    用户界面层                                │
-│   ┌──────────────────┐    ┌──────────────────┐             │
-│   │   GUI (PyQt5)    │    │   CLI (Click)    │             │
-│   │  main_window.py  │    │   cli/runner.py  │             │
-│   └────────┬─────────┘    └────────┬─────────┘             │
-│            │                       │                        │
-├────────────┼───────────────────────┼────────────────────────┤
-│            ▼         服务层        ▼                        │
-│   ┌─────────────────────────────────────────┐              │
-│   │       AgentChatService (协调器)          │              │
-│   │  ┌──────────┐ ┌──────────┐ ┌──────────┐ │              │
-│   │  │ApiClient │ │Message   │ │Context   │ │              │
-│   │  │(SSE流式) │ │Builder   │ │Manager   │ │              │
-│   │  └──────────┘ └──────────┘ └──────────┘ │              │
-│   │  ┌──────────┐ ┌──────────┐ ┌──────────┐ │              │
-│   │  │ToolPipe  │ │Decision  │ │Skills    │ │              │
-│   │  │line      │ │Engine    │ │Service   │ │              │
-│   │  └──────────┘ └──────────┘ └──────────┘ │              │
-│   └────────────────────┬────────────────────┘              │
-│                        │                                    │
-├────────────────────────┼────────────────────────────────────┤
-│                        ▼        MCP 桥接层                  │
-│   ┌─────────────────────────────────────────┐              │
-│   │   MCPService → BridgeClient (TCP)       │              │
-│   │        JSON-RPC over TCP :31337         │              │
-│   └────────────────────┬────────────────────┘              │
-│                        │                                    │
-├────────────────────────┼────────────────────────────────────┤
-│                        ▼        IDA Pro 插件                │
-│   ┌─────────────────────────────────────────┐              │
-│   │   SurveyMcpBridgePlugin (IDA 内运行)     │              │
-│   │   50+ @ida_tool 工具，覆盖逆向全流程      │              │
-│   └─────────────────────────────────────────┘              │
-└─────────────────────────────────────────────────────────────┘
-```
+1. 将 [`rift_mcp_bridge_plugin.py`](m2/ida_plugin/rift_mcp_bridge_plugin.py) 复制到 IDA 的 `plugins/` 目录。
+2. 重启 IDA，打开待分析文件并等待自动分析完成。
+3. 确认 IDA 输出窗口出现 `[survey-ida-mcp-bridge] socket listening`；默认监听 `127.0.0.1:31337`。
+4. 启动或重启 Survey。在 CLI 中可用 `/reload` 重新检测连接，再让模型调用 `check_connection`。
 
-### 📁 目录结构
+> [!IMPORTANT]
+> Bridge 由 IDA 的插件初始化流程启动。仅通过 `File → Script file...` 执行这个文件不会自动调用插件初始化，因此不能替代上面的安装步骤。Survey 的 GUI / CLI 直接连接 TCP Bridge，日常使用无需额外启动 FastMCP 服务。
 
-```
-survey/
-├── main.py                    # GUI 入口
-├── cli/                       # CLI 界面
-│   ├── main.py                # Click 命令组
-│   ├── runner.py              # CLI 运行器
-│   └── ui.py                  # Rich 终端渲染
-├── app/                       # 共享后端
-│   ├── config/
-│   │   ├── llm_config.json        # ← 你的配置（gitignore 忽略）
-│   │   └── llm_config.example.json # ← 配置模板
-│   └── gui/
-│       ├── main_window.py     # FluentWindow 主窗口
-│       ├── pages/             # 4 个标签页（Chat/Skills/Model/Settings）
-│       ├── services/          # 核心服务层
-│       │   ├── chat_service.py    # Agent 协调器
-│       │   ├── mcp_service.py     # MCP 客户端
-│       │   ├── tool_pipeline.py   # 工具执行管线
-│       │   └── ...
-│       └── state/             # 状态模型（LLMConfig, ChatState）
-├── m2/                        # 独立 MCP 桥接层（无 app/ 依赖）
-│   ├── bridge_protocol.py     # TCP JSON-RPC 客户端
-│   ├── ida_mcp_server.py      # FastMCP 服务器
-│   ├── tools/                 # 50+ IDA 工具定义
-│   │   ├── analysis.py        # 反编译/反汇编
-│   │   ├── query.py           # 搜索/列表
-│   │   ├── modify.py          # 重命名/修改
-│   │   ├── debug.py           # 调试器控制
-│   │   └── ...
-│   └── ida_plugin/
-│       └── rift_mcp_bridge_plugin.py  # IDA 插件（单文件安装）
-├── skills/                    # Skills 知识库
-│   ├── idapython/             # IDAPython API 参考
-│   └── upx_unpack/            # UPX 脱壳工具
-├── tests/                     # 测试套件
-├── requirements.txt
-├── start_venv.bat             # 一键启动 GUI（自动配环境）
-└── cli.bat                    # 一键启动 CLI
+连接成功后，可以这样提问：
+
+> 分析当前函数的输入、输出和主要分支，结合调用关系解释用途。先只读取，不修改数据库。
+
+重命名、类型修改、补丁和 IDAPython 执行会改变分析状态；操作前保存 IDA 数据库副本，并确认目标文件。
+
+## 工具与扩展
+
+[`m2/tools/`](m2/tools/) 定义了 **52 个 IDA 工具**，按领域组织：
+
+| 领域 | 代表工具 |
+| --- | --- |
+| 连接与定位 | `check_connection` · `get_metadata` · `get_current_function` |
+| 反编译与调用关系 | `decompile_function` · `get_callers` · `get_callees` · `get_xrefs_to` |
+| 数据查询 | `list_functions` · `list_strings` · `list_imports` · `read_bytes` |
+| 类型与栈帧 | `get_struct_info` · `declare_c_type` · `get_stack_frame_variables` |
+| 修改与脚本 | `rename_function` · `set_comment` · `patch_asm` · `execute_python` |
+| 调试扩展 | `debug_start` · `debug_step_into` · `debug_get_registers` |
+
+调试工具属于 `dbg` 扩展组。实际提供给模型的工具由运行入口、[`ToolManifest`](app/gui/services/tool_manifest.py) 和延迟加载策略决定，并非所有工具都默认启用。
+
+### Skills 与 LLM4Decompile
+
+- **IDAPython**：[`skills/idapython/`](skills/idapython/) 提供 IDA Python API 参考。
+- **UPX**：[`skills/upx_unpack/`](skills/upx_unpack/) 包含解壳 Skill 和 Windows 版 UPX；其他平台需准备对应可执行文件，并调整 `upx_path.txt`。
+- **自定义 Skill**：在 `skills/<名称>/SKILL.md` 中填写 `name`、`description`、`category` 和正文，重载后通过 Skills 页面或 CLI `/skills` 查看。
+- **LLM4Decompile**：默认关闭。单独部署对应模型服务后，再配置 `llm4decompile_enabled`、`llm4decompile_base_url` 和 `llm4decompile_model`。当前模型工具入口是 `llm4decompile_refine`；底层服务还提供结构体和标识符恢复方法。
+
+### CLI 常用操作
+
+| 命令或按键 | 用途 |
+| --- | --- |
+| `/model` / `/models` | 查看当前模型 / 获取可用模型列表 |
+| `/clear` | 清空对话历史与工具缓存 |
+| `/reload` | 重载配置并检测 IDA 连接 |
+| `/skills` / `/help` | 查看 Skills / 完整帮助 |
+| `Alt+Enter` | 插入换行 |
+| `Ctrl+O` | 展开或折叠推理内容 |
+
+## 开发与配置参考
+
+GUI 与 CLI 共用 `app/gui/services/` 中的模型调用、上下文管理和工具执行服务。IDA 插件负责在 IDA 进程内执行操作；[`m2/ida_mcp_server.py`](m2/ida_mcp_server.py) 则提供独立的 FastMCP 入口。
+
+| 内容 | 入口 |
+| --- | --- |
+| 配置模板与可调参数 | [llm_config.example.json](app/config/llm_config.example.json) |
+| 配置字段与加载逻辑 | [llm_config.py](app/gui/state/llm_config.py) |
+| 工具注册、分类与元数据 | [_decorators.py](m2/tools/_decorators.py) |
+| 缓存、重试与并发控制 | [tool_pipeline.py](app/gui/services/tool_pipeline.py) |
+| 可选反编译模型服务 | [llm4decompile_service.py](app/gui/services/llm4decompile_service.py) |
+
+在已安装依赖的环境中运行测试：
+
+```powershell
+python -m pytest
+python -m pytest tests/test_tool_pipeline.py -v
 ```
 
----
+欢迎通过 [Issues](https://github.com/Cec1c/Survey/issues) 反馈问题或提交 Pull Request。新增工具时，使用 `@ida_tool` 注册函数，并更新相应测试与文档。
 
-## 🔌 IDA Pro 插件安装
+## 许可与致谢
 
-1. 打开 IDA Pro，进入 `File → Script file...`
-2. 运行 `m2/ida_plugin/rift_mcp_bridge_plugin.py`
-3. 插件会在 `127.0.0.1:31337` 启动 TCP JSON-RPC 服务器
-4. Survey 自动连接并激活全部工具
+本项目采用 [GNU General Public License v3.0](LICENSE)。
 
-> 💡 **提示**：也可以将插件脚本放入 IDA 的 `plugins/` 目录实现自动加载。
-
----
-
-## 🎯 使用示例
-
-### GUI 模式
-
-启动后你会看到 4 个标签页：
-
-| 标签 | 功能 |
-|------|------|
-| 💬 **Chat** | 主对话界面，支持流式输出、思考气泡、工具调用面板 |
-| 🧩 **Skills** | 管理和浏览已加载的 Skills |
-| ⚙️ **Model** | 切换模型、配置 API 参数 |
-| 🔧 **Settings** | 全局设置、MCP 连接配置 |
-
-### CLI 模式
-
-```
-> 分析一下 main 函数的逻辑
-
- 🔧 调用工具: decompile_function(0x401000)
- ✅ 工具完成
-
- 📋 分析结果：
-
- main 函数是一个简单的入口函数，执行以下操作：
- 1. 调用 init_network() 初始化网络模块
- 2. 调用 load_config("config.ini") 加载配置
- 3. 进入主循环 event_loop()，处理用户输入
- ...
-```
-
-### CLI 快捷键
-
-| 按键 | 功能 |
-|------|------|
-| `Ctrl+O` | 切换显示/隐藏 LLM 推理过程 |
-| `Ctrl+C` | 中断当前生成 |
-| `/model` | 切换模型 |
-| `/clear` | 清空对话历史 |
-| `/help` | 显示帮助 |
-
----
-
-## ⚡ 高级配置
-
-`llm_config.json` 中还有许多可调参数：
-
-```jsonc
-{
-  // Agent 行为
-  "agent_max_tool_rounds": 48,          // 最大工具调用轮数
-  "agent_enable_planning": true,        // 启用计划-执行-验证循环
-  "agent_enable_hypothesis_tracking": true,  // 假设追踪
-
-  // 上下文管理
-  "agent_compaction_threshold_chars": 25000, // 触发上下文压缩的阈值
-  "agent_max_context_chars": 80000,         // 最大上下文长度
-  "tool_result_global_budget_chars": 120000, // 工具结果总预算
-
-  // 工具执行
-  "tool_executor_max_workers": 8,       // 并发工具执行数
-  "tool_executor_decompile_limit": 2,   // 反编译并发限制
-  "tool_deferred_loading": true,        // 延迟加载不常用工具
-
-  // MCP 连接
-  "mcp_host": "127.0.0.1",
-  "mcp_port": 31337,
-  "mcp_timeout_seconds": 20.0,
-
-  // LLM4Decompile（可选）
-  "llm4decompile_enabled": false,
-  "llm4decompile_base_url": "http://localhost:8080/v1",
-  "llm4decompile_model": "llm4decompile-9b-v2"
-}
-```
-
----
-
-## 🧪 运行测试
-
-```bash
-# 激活虚拟环境后
-pytest
-
-# 运行特定测试
-pytest tests/test_tool_pipeline.py -v
-```
-
----
-
-## 🤝 贡献
-
-欢迎贡献！无论是修 bug、加新工具、还是改进文档：
-
-1. Fork 本仓库
-2. 创建你的分支 (`git checkout -b feature/awesome-tool`)
-3. 提交更改 (`git commit -m 'Add awesome tool'`)
-4. 推送到远程 (`git push origin feature/awesome-tool`)
-5. 创建 Pull Request
-
-### 🛠️ 添加新工具
-
-在 `m2/tools/` 下创建新函数，使用 `@ida_tool` 装饰器即可自动注册：
-
-```python
-from m2.tools._decorators import ida_tool
-
-@ida_tool("my_category", concurrency_safe=True)
-def my_new_tool(address: str) -> dict:
-    """工具描述，LLM 会看到这段文字"""
-    # 你的实现
-    return {"result": "data"}
-```
-
----
-
-## 📝 依赖
-
-| 包 | 用途 |
-|---|------|
-| `PyQt5` | GUI 框架 |
-| `pyqt-fluent-widgets` | Fluent Design 组件库 |
-| `click` | CLI 命令行框架 |
-| `rich` | 终端富文本渲染 |
-| `prompt-toolkit` | CLI 交互式输入 |
-| `mcp` | Model Context Protocol SDK |
-| `pytest` | 测试框架 |
-
----
-
-## 📜 许可证
-
-本项目基于 [GNU General Public License v3.0](LICENSE) 开源。
-
----
-
-## 🙏 致谢
-
-- [IDA Pro](https://hex-rays.com/ida-pro/) — 逆向工程的黄金标准
-- [MCP](https://modelcontextprotocol.io/) — Model Context Protocol，让 LLM 调用工具变得优雅
-- [qfluentwidgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets) — 精美的 Fluent Design 组件库
-- [Rich](https://github.com/Textualize/rich) — 让终端输出不再无聊
-- [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) — 二进制分析 LLM 研究
-
----
-
-<div align="center">
-
-**如果这个项目对你有帮助，给个 ⭐ 吧！**
-
-*Made with 🔬 and ☕*
-
-</div>
+感谢 [IDA Pro](https://hex-rays.com/ida-pro/)、[MCP](https://modelcontextprotocol.io/)、[PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)、[Rich](https://github.com/Textualize/rich) 和 [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) 提供的工具、组件与研究成果。
