@@ -9,16 +9,16 @@
 [![License: GPLv3](https://img.shields.io/static/v1?label=License&message=GPLv3&color=2563EB&style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/Cec1c/Survey?style=flat-square&label=Stars&color=E3B341)](https://github.com/Cec1c/Survey/stargazers)
 
-An LLM-powered reverse engineering assistant for IDA Pro, with GUI and CLI interfaces.
+Open a program in IDA Pro and ask a model to explain its code using decompilation, cross-references, strings, and memory data.
 
-Analyze programs using decompilation, cross-references, strings, and memory data. Use tools to assist with renaming, comments, and type refinement.
+Survey offers GUI and CLI interfaces backed by the same analysis services and tools. Follow up with assisted renaming, comments, and type refinement.
 
 [简体中文](README.md) ｜ [Quick Start](#quick-start) ｜ [Connect IDA](#connect-ida-pro) ｜ [Tools and Extensions](#tools-and-extensions) ｜ [Feedback](https://github.com/Cec1c/Survey/issues)
 
 </div>
 
 > [!NOTE]
-> Survey can serve as a general programming and reverse engineering learning assistant without IDA. Analyzing a specific binary requires opening the target in IDA Pro and starting this repository's Bridge plugin. Decompilation also requires an available Hex-Rays Decompiler.
+> Binary analysis requires a target opened in IDA Pro with the Bridge plugin loaded; decompilation requires Hex-Rays Decompiler. Plain chat mode is also available for programming and reverse engineering discussions.
 
 ## What Can It Do?
 
@@ -94,7 +94,7 @@ Inspect the current model, Skills, and IDA connection status:
 python -m cli.main config
 ```
 
-At startup, the CLI checks the Bridge: a successful connection enables IDA tools; an unavailable connection selects plain chat mode. The configured `use_ida_tools` value can differ from the effective runtime state. Check the `config` output for both.
+The CLI detects the Bridge at startup and enables IDA tools when connected, otherwise entering plain chat mode. Use `config` to inspect the effective connection state alongside the `use_ida_tools` setting.
 
 ## Connect IDA Pro
 
@@ -104,7 +104,7 @@ At startup, the CLI checks the Bridge: a successful connection enables IDA tools
 4. Start or restart Survey. In the CLI, `/reload` checks the connection again. Then ask the model to call `check_connection`.
 
 > [!IMPORTANT]
-> The Bridge starts during IDA plugin initialization. Executing this file through `File → Script file...` alone does not invoke that initialization and does not replace the installation steps above. Survey's GUI / CLI connects directly to the TCP Bridge; normal use does not require a separate FastMCP server process.
+> Install the file in `plugins/` and restart IDA to start the Bridge through plugin initialization; `File → Script file...` only executes the file. Survey's GUI / CLI then connects directly to the TCP Bridge.
 
 Once connected, try asking:
 
@@ -125,7 +125,7 @@ Renaming, type changes, patches, and IDAPython execution can change the analysis
 | Changes and scripting | `rename_function` · `set_comment` · `patch_asm` · `execute_python` |
 | Debugging extension | `debug_start` · `debug_step_into` · `debug_get_registers` |
 
-Debugging tools belong to the `dbg` extension group. The entry point, [`ToolManifest`](app/gui/services/tool_manifest.py), and deferred-loading policy determine which tools are exposed to the model; not every tool is enabled by default.
+Enable debugging tools through the `dbg` extension group. The entry point, [`ToolManifest`](app/gui/services/tool_manifest.py), and deferred-loading policy determine the tools currently available to the model.
 
 ### Skills and LLM4Decompile
 

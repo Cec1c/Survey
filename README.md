@@ -9,16 +9,16 @@
 [![许可：GPLv3](https://img.shields.io/static/v1?label=%E8%AE%B8%E5%8F%AF&message=GPLv3&color=2563EB&style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/Cec1c/Survey?style=flat-square&label=Stars&color=E3B341)](https://github.com/Cec1c/Survey/stargazers)
 
-面向 IDA Pro 的 LLM 逆向分析助手，提供图形界面和命令行两种入口。
+在 IDA Pro 中打开程序，让模型结合反编译、交叉引用、字符串和内存数据解释代码。
 
-让模型结合反编译、交叉引用、字符串与内存数据分析程序，也可使用工具辅助重命名、注释和类型整理。
+Survey 提供图形界面与命令行，共用分析服务和工具。分析后还可辅助重命名、添加注释和整理类型。
 
 [English](README.en.md) ｜ [快速开始](#快速开始) ｜ [连接 IDA](#连接-ida-pro) ｜ [工具与扩展](#工具与扩展) ｜ [反馈](https://github.com/Cec1c/Survey/issues)
 
 </div>
 
 > [!NOTE]
-> 不连接 IDA 时，Survey 可以作为普通编程与逆向学习助手使用。分析具体二进制需要在 IDA Pro 中打开目标，并启动本仓库的 Bridge 插件；反编译功能还需要可用的 Hex-Rays Decompiler。
+> 二进制分析需在 IDA Pro 中打开目标并加载 Bridge 插件，反编译需 Hex-Rays Decompiler。也可使用普通对话模式，讨论编程与逆向学习问题。
 
 ## 能做什么？
 
@@ -94,7 +94,7 @@ python -m cli.main run
 python -m cli.main config
 ```
 
-CLI 启动时会检测 Bridge：连接成功则启用 IDA 工具，连接不可用则使用普通对话模式。配置中的 `use_ida_tools` 与运行时实际状态可能不同，以 `config` 输出为准。
+CLI 启动时自动检测 Bridge，连接成功后启用 IDA 工具，否则进入普通对话模式。通过 `config` 查看当前实际连接状态及 `use_ida_tools` 配置。
 
 ## 连接 IDA Pro
 
@@ -104,7 +104,7 @@ CLI 启动时会检测 Bridge：连接成功则启用 IDA 工具，连接不可�
 4. 启动或重启 Survey。在 CLI 中可用 `/reload` 重新检测连接，再让模型调用 `check_connection`。
 
 > [!IMPORTANT]
-> Bridge 由 IDA 的插件初始化流程启动。仅通过 `File → Script file...` 执行这个文件不会自动调用插件初始化，因此不能替代上面的安装步骤。Survey 的 GUI / CLI 直接连接 TCP Bridge，日常使用无需额外启动 FastMCP 服务。
+> 将文件安装到 `plugins/` 并重启 IDA，才能通过插件初始化流程启动 Bridge；`File → Script file...` 只执行文件。Survey 的 GUI / CLI 随后直接连接 TCP Bridge。
 
 连接成功后，可以这样提问：
 
@@ -125,7 +125,7 @@ CLI 启动时会检测 Bridge：连接成功则启用 IDA 工具，连接不可�
 | 修改与脚本 | `rename_function` · `set_comment` · `patch_asm` · `execute_python` |
 | 调试扩展 | `debug_start` · `debug_step_into` · `debug_get_registers` |
 
-调试工具属于 `dbg` 扩展组。实际提供给模型的工具由运行入口、[`ToolManifest`](app/gui/services/tool_manifest.py) 和延迟加载策略决定，并非所有工具都默认启用。
+调试工具通过 `dbg` 扩展组启用。运行入口、[`ToolManifest`](app/gui/services/tool_manifest.py) 和延迟加载策略共同决定当前可用工具。
 
 ### Skills 与 LLM4Decompile
 
